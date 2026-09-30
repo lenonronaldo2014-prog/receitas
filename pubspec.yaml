@@ -118,7 +118,7 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-# ??cone do app: gerado com `dart run flutter_launcher_icons`
+# Ícone do app: gerado com `dart run flutter_launcher_icons`
 flutter_launcher_icons:
   image_path: "assets/icon/icon.png"
   android: "launcher_icon"
