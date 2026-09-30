@@ -46,7 +46,7 @@ class HomeScreen extends StatelessWidget {
                       style: t.headlineMedium,
                     ),
                     Text(
-                      'Desenvolvido para uso de Anna ❤️',
+                      'Desenvolvido para o uso da Anna ❤️',
                       style: t.bodyMedium?.copyWith(color: c.textSecondary),
                     ),
                   ],
