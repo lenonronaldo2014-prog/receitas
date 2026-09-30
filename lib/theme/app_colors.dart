@@ -84,15 +84,16 @@ class AppColors extends ThemeExtension<AppColors> {
   static const light = AppColors(
     background: Color(0xFFF6F7F9),
     backgroundSecondary: Color(0xFFFFFFFF),
-    card: Color(0xFFFFFFFF),
-    cardElevated: Color(0xFFEEF1F5),
+    // Cinza para os botões/cards se destacarem do fundo branco.
+    card: Color(0xFFE9ECF0),
+    cardElevated: Color(0xFFDDE1E7),
     accent: defaultAccent,
     accentSecondary: Color(0xFFFF8A00),
     onAccent: Color(0xFF080D14),
     textPrimary: Color(0xFF101722),
     textSecondary: Color(0xFF5B6574),
     textDisabled: Color(0xFF8A94A3),
-    border: Color(0xFFE1E5EB),
+    border: Color(0xFFD2D7DF),
     success: Color(0xFF2EA94D),
     error: Color(0xFFE53935),
     shadow: Color(0xFF1B2635),
@@ -105,18 +106,32 @@ class AppColors extends ThemeExtension<AppColors> {
   );
 
   /// Troca a cor de destaque, derivando a secundária e a cor do texto sobre ela.
+  /// Nos estilos claros, os botões/cards ganham um tom da cor de destaque
+  /// para se destacarem do fundo branco.
   AppColors withAccent(Color color) {
-    if (color.toARGB32() == defaultAccent.toARGB32()) return this;
-    final hsl = HSLColor.fromColor(color);
-    return copyWith(
-      accent: color,
-      accentSecondary: hsl
-          .withLightness((hsl.lightness - 0.1).clamp(0.0, 1.0))
-          .toColor(),
-      onAccent: color.computeLuminance() > 0.35
-          ? const Color(0xFF080D14)
-          : Colors.white,
-    );
+    var result = this;
+    if (color.toARGB32() != defaultAccent.toARGB32()) {
+      final hsl = HSLColor.fromColor(color);
+      result = copyWith(
+        accent: color,
+        accentSecondary: hsl
+            .withLightness((hsl.lightness - 0.1).clamp(0.0, 1.0))
+            .toColor(),
+        onAccent: color.computeLuminance() > 0.35
+            ? const Color(0xFF080D14)
+            : Colors.white,
+      );
+    }
+    if (background.computeLuminance() > 0.5) {
+      Color tint(double a) =>
+          Color.alphaBlend(color.withValues(alpha: a), Colors.white);
+      result = result.copyWith(
+        card: tint(0.16),
+        cardElevated: tint(0.26),
+        border: tint(0.45),
+      );
+    }
+    return result;
   }
 
   LinearGradient get accentGradient => LinearGradient(
