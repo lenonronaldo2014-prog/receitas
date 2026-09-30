@@ -14,7 +14,6 @@ import '../widgets/menu_tile.dart';
 import '../widgets/tab_header.dart';
 import 'main_shell.dart';
 import 'settings_screen.dart';
-import 'shopping_list_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -143,16 +142,6 @@ class ProfileScreen extends StatelessWidget {
                     title: 'Favoritos',
                     subtitle: count(store.favorites.length),
                     onTap: () => MainShell.goTo(context, MainShell.favorites),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  MenuTile(
-                    icon: Icons.shopping_basket_outlined,
-                    title: 'Lista de Compras',
-                    subtitle: user.shopping.isEmpty
-                        ? null
-                        : '${user.shopping.length} itens',
-                    onTap: () =>
-                        AppNav.push(context, const ShoppingListScreen()),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   MenuTile(

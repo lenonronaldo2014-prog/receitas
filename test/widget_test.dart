@@ -208,7 +208,7 @@ void main() {
 
     await tester.tap(find.text('Perfil'));
     await tester.pumpAndSettle();
-    expect(find.text('Lista de Compras'), findsOneWidget);
+    expect(find.text('Lista de Compras'), findsNothing);
     expect(find.text('Buscar atualização'), findsOneWidget);
     expect(find.text('Versão 1.0.0'), findsOneWidget);
   });

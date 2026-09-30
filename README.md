@@ -6,7 +6,7 @@ App Flutter para guardar receitas (bolos, salgados, qualquer receita), com visua
 
 - Criar, editar e excluir receitas (com foto, categoria, dificuldade, tempo, porções, ingredientes e modo de preparo)
 - Pesquisa por nome ou ingrediente (ignora acentos), buscas recentes e sugestões
-- Categorias, favoritos e lista de compras
+- Categorias e favoritos
 - **Compartilhar por código**: gera um código `RDA1-...` que outra pessoa cola em **+ → Adicionar por código**
 - Tema escuro/claro e cor de destaque configuráveis
 - **Buscar atualização** (Perfil): verifica se há versão nova nas Releases deste repositório

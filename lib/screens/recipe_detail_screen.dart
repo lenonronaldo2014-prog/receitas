@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../models/recipe.dart';
 import '../navigation.dart';
 import '../providers/recipe_store.dart';
-import '../providers/user_data.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
 import '../widgets/favorite_button.dart';
@@ -13,7 +12,7 @@ import '../widgets/recipe_parts.dart';
 import '../widgets/section_title.dart';
 import '../widgets/share_recipe_sheet.dart';
 
-enum _MenuAction { edit, share, shopping, delete }
+enum _MenuAction { edit, share, delete }
 
 class RecipeDetailScreen extends StatelessWidget {
   const RecipeDetailScreen({super.key, required this.recipeId});
@@ -46,22 +45,6 @@ class RecipeDetailScreen extends StatelessWidget {
       Navigator.pop(context);
       await context.read<RecipeStore>().delete(recipe.id);
     }
-  }
-
-  Future<void> _addToShopping(BuildContext context, Recipe recipe) async {
-    final added = await context.read<UserData>().addToShopping(
-      recipe.ingredients,
-    );
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          added == 0
-              ? 'Os ingredientes já estão na lista de compras.'
-              : '$added ingrediente(s) adicionados à lista de compras.',
-        ),
-      ),
-    );
   }
 
   @override
@@ -107,7 +90,6 @@ class RecipeDetailScreen extends StatelessWidget {
                 onSelected: (a) => switch (a) {
                   _MenuAction.edit => AppNav.editRecipe(context, recipe),
                   _MenuAction.share => ShareRecipeSheet.show(context, recipe),
-                  _MenuAction.shopping => _addToShopping(context, recipe),
                   _MenuAction.delete => _confirmDelete(context, recipe),
                 },
                 itemBuilder: (_) => [
@@ -123,13 +105,6 @@ class RecipeDetailScreen extends StatelessWidget {
                     child: ListTile(
                       leading: Icon(Icons.share_rounded),
                       title: Text('Compartilhar código'),
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: _MenuAction.shopping,
-                    child: ListTile(
-                      leading: Icon(Icons.add_shopping_cart_rounded),
-                      title: Text('Ingredientes → compras'),
                     ),
                   ),
                   PopupMenuItem(

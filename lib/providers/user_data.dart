@@ -4,30 +4,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/image_storage.dart';
 
-/// Dados do perfil, buscas recentes e lista de compras.
+/// Dados do perfil e buscas recentes.
 class UserData extends ChangeNotifier {
   static const _nameKey = 'profile_name';
   static const _emailKey = 'profile_email';
   static const _photoKey = 'profile_photo';
   static const _searchKey = 'recent_searches';
-  static const _shoppingKey = 'shopping_list';
-  static const _shoppingDoneKey = 'shopping_list_done';
   static const _maxRecent = 8;
 
   String _name = '';
   String _email = '';
   String? _photoPath;
   List<String> _recentSearches = [];
-  List<String> _shopping = [];
-  Set<String> _shoppingDone = {};
 
   String get name => _name;
   String get email => _email;
   String? get photoPath => _photoPath;
   String get firstName => _name.trim().split(' ').first;
   List<String> get recentSearches => List.unmodifiable(_recentSearches);
-  List<String> get shopping => List.unmodifiable(_shopping);
-  bool isBought(String item) => _shoppingDone.contains(item);
 
   Future<void> load() async {
     final p = await SharedPreferences.getInstance();
@@ -35,8 +29,9 @@ class UserData extends ChangeNotifier {
     _email = p.getString(_emailKey) ?? '';
     _photoPath = p.getString(_photoKey);
     _recentSearches = p.getStringList(_searchKey) ?? [];
-    _shopping = p.getStringList(_shoppingKey) ?? [];
-    _shoppingDone = (p.getStringList(_shoppingDoneKey) ?? []).toSet();
+    // Limpa dados da antiga lista de compras (removida na versão 1.0.2).
+    await p.remove('shopping_list');
+    await p.remove('shopping_list_done');
     notifyListeners();
   }
 
@@ -84,41 +79,5 @@ class UserData extends ChangeNotifier {
     notifyListeners();
     final p = await SharedPreferences.getInstance();
     await p.remove(_searchKey);
-  }
-
-  /// Adiciona itens à lista de compras (ignora os que já estão lá).
-  Future<int> addToShopping(Iterable<String> items) async {
-    var added = 0;
-    for (final item in items.map((e) => e.trim())) {
-      if (item.isEmpty || _shopping.contains(item)) continue;
-      _shopping.add(item);
-      added++;
-    }
-    await _saveShopping();
-    return added;
-  }
-
-  Future<void> toggleBought(String item) async {
-    if (!_shoppingDone.remove(item)) _shoppingDone.add(item);
-    await _saveShopping();
-  }
-
-  Future<void> removeShopping(String item) async {
-    _shopping.remove(item);
-    _shoppingDone.remove(item);
-    await _saveShopping();
-  }
-
-  Future<void> clearBought() async {
-    _shopping.removeWhere(_shoppingDone.contains);
-    _shoppingDone.clear();
-    await _saveShopping();
-  }
-
-  Future<void> _saveShopping() async {
-    notifyListeners();
-    final p = await SharedPreferences.getInstance();
-    await p.setStringList(_shoppingKey, _shopping);
-    await p.setStringList(_shoppingDoneKey, _shoppingDone.toList());
   }
 }
