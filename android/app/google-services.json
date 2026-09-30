@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "962392016831",
+    "project_id": "receitas-anna",
+    "storage_bucket": "receitas-anna.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:962392016831:android:2adeb8e4269d9d8482030a",
+        "android_client_info": {
+          "package_name": "com.receitas.receitas"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "962392016831-5fnq818ga8fvhcjprkddbdbmrsodm83v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.receitas.receitas",
+            "certificate_hash": "86937c701d8d690e5d9700bf106e69ae87372131"
+          }
+        },
+        {
+          "client_id": "962392016831-mfsk48bgb1fack18kprhhjbiirukv8h3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzotL2XivQn_64zddNNKQNygDhiAcActI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "962392016831-mfsk48bgb1fack18kprhhjbiirukv8h3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "962392016831-reru959l2vhdm9bu7edri1bh0rlsec4d.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.receitas.receitas"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,37 +1,92 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:receitas/main.dart';
 import 'package:receitas/models/recipe.dart';
+import 'package:receitas/providers/auth_controller.dart';
 import 'package:receitas/providers/recipe_store.dart';
 import 'package:receitas/providers/theme_controller.dart';
 import 'package:receitas/providers/user_data.dart';
 import 'package:receitas/services/recipe_share.dart';
 import 'package:receitas/services/update_service.dart';
-import 'package:receitas/screens/main_shell.dart';
+import 'package:receitas/screens/auth_gate.dart';
+import 'package:receitas/services/user_cloud.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Future<void> pumpApp(WidgetTester tester) async {
+/// Login falso: aceita qualquer senha "123456"; dados numa nuvem em memória.
+class FakeAuth extends AuthController {
+  FakeAuth({AppUser? signedIn}) : _user = signedIn;
+
+  final clouds = <String, MemoryUserCloud>{};
+  AppUser? _user;
+
+  @override
+  bool get ready => true;
+
+  @override
+  AppUser? get user => _user;
+
+  @override
+  UserCloud cloudFor(AppUser user) =>
+      clouds.putIfAbsent(user.uid, MemoryUserCloud.new);
+
+  @override
+  Future<void> signIn(String email, String password) async {
+    if (password != '123456') {
+      throw const AuthException('E-mail ou senha incorretos.');
+    }
+    _user = AppUser(uid: email, email: email);
+    notifyListeners();
+  }
+
+  @override
+  Future<void> signUp(String name, String email, String password) async {
+    _user = AppUser(uid: email, email: email, displayName: name);
+    notifyListeners();
+  }
+
+  @override
+  Future<void> resetPassword(String email) async {}
+
+  @override
+  Future<void> signInWithGoogle() async {}
+
+  @override
+  Future<void> signOut() async {
+    _user = null;
+    notifyListeners();
+  }
+}
+
+const anna = AppUser(uid: 'anna', email: 'anna@email.com', displayName: 'Anna');
+
+Future<FakeAuth> pumpApp(
+  WidgetTester tester, {
+  AppUser? signedIn = anna,
+}) async {
   // Tela de celular (390x780 lógicos) para testar o layout real.
   tester.view.physicalSize = const Size(1170, 2340);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
-  final store = RecipeStore();
+  final auth = FakeAuth(signedIn: signedIn);
   final user = UserData();
-  await store.load();
   await user.load();
   await tester.pumpWidget(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeController()),
-        ChangeNotifierProvider.value(value: store),
+        ChangeNotifierProvider<AuthController>.value(value: auth),
+        ChangeNotifierProvider(create: (_) => RecipeStore()),
         ChangeNotifierProvider.value(value: user),
       ],
-      child: const ReceitasApp(home: MainShell()),
+      child: const ReceitasApp(home: AuthGate()),
     ),
   );
   await tester.pumpAndSettle();
+  return auth;
 }
 
 void main() {
@@ -78,7 +133,7 @@ void main() {
     });
     expect(r.category, RecipeCategory.sobremesa);
     expect(r.difficulty, Difficulty.facil);
-    expect(r.imagePath, isNull);
+    expect(r.photoId, isNull);
   });
 
   test('código de compartilhamento ida e volta', () {
@@ -92,7 +147,7 @@ void main() {
       ingredients: ['500g de polvilho', '2 ovos', '200g de queijo'],
       steps: ['Misture tudo', 'Faça bolinhas', 'Asse a 180°C'],
       notes: 'Receita da vovó ❤️',
-      imagePath: '/foto.jpg',
+      photoId: 'foto1',
       favorite: true,
       createdAt: DateTime(2020),
       updatedAt: DateTime(2020),
@@ -113,7 +168,7 @@ void main() {
     expect(copy.notes, original.notes);
     expect(copy.id, isNot('abc'));
     expect(copy.favorite, isFalse);
-    expect(copy.imagePath, isNull);
+    expect(copy.photoId, isNull);
 
     expect(RecipeShare.decode('bolo de cenoura'), isNull);
     expect(RecipeShare.decode('RDA1-lixo'), isNull);
@@ -151,7 +206,7 @@ void main() {
     tester,
   ) async {
     await pumpApp(tester);
-    expect(find.text('Olá!'), findsOneWidget);
+    expect(find.text('Olá, Anna!'), findsOneWidget);
     expect(find.text('Nenhuma receita ainda'), findsOneWidget);
     expect(find.text('Criar receita'), findsOneWidget);
   });
@@ -211,5 +266,65 @@ void main() {
     expect(find.text('Lista de Compras'), findsNothing);
     expect(find.text('Buscar atualização'), findsOneWidget);
     expect(find.text('Versão 1.0.0'), findsOneWidget);
+  });
+
+  testWidgets('sem conta mostra o login; entrar abre o app', (tester) async {
+    await pumpApp(tester, signedIn: null);
+    expect(find.text('Entrar'), findsOneWidget);
+    expect(find.text('Continuar com o Google'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'anna@email.com');
+    await tester.enterText(find.byType(TextFormField).at(1), 'errada');
+    await tester.tap(find.text('Entrar'));
+    await tester.pumpAndSettle();
+    expect(find.text('E-mail ou senha incorretos.'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField).at(1), '123456');
+    await tester.tap(find.text('Entrar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nenhuma receita ainda'), findsOneWidget);
+  });
+
+  testWidgets('sair da conta volta para o login', (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Perfil'));
+    await tester.pumpAndSettle();
+    expect(find.text('anna@email.com'), findsOneWidget);
+
+    await tester.tap(find.text('Sair da conta'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Sair'));
+    await tester.pumpAndSettle();
+    expect(find.text('Esqueci minha senha'), findsOneWidget);
+  });
+
+  testWidgets('receitas antigas do aparelho sobem para a conta', (
+    tester,
+  ) async {
+    final legacy = Recipe(
+      id: 'velha',
+      title: 'Pudim da Vovó',
+      category: RecipeCategory.sobremesa,
+      ingredients: ['leite'],
+      steps: ['misture'],
+      createdAt: DateTime(2025),
+      updatedAt: DateTime(2025),
+    );
+    SharedPreferences.setMockInitialValues({
+      'recipes': jsonEncode([legacy.toJson()]),
+      'profile_name': 'Anna Maria',
+    });
+    final auth = await pumpApp(tester);
+    expect(find.text('Pudim da Vovó'), findsWidgets);
+    expect(find.text('Olá, Anna!'), findsOneWidget);
+
+    final cloud = auth.clouds['anna']!;
+    final saved = await cloud.recipes().first;
+    expect(saved.map((r) => r.title), ['Pudim da Vovó']);
+    expect((await cloud.profile().first)['name'], 'Anna Maria');
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('recipes'), isNull);
+    expect(prefs.getString('recipes_backup_local'), isNotNull);
   });
 }

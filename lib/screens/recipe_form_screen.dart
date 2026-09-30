@@ -6,10 +6,10 @@ import 'package:provider/provider.dart';
 
 import '../models/recipe.dart';
 import '../providers/recipe_store.dart';
-import '../services/image_storage.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
 import '../widgets/photo_picker.dart';
+import '../widgets/recipe_image.dart';
 
 /// Tela usada tanto para criar quanto para editar uma receita.
 class RecipeFormScreen extends StatefulWidget {
@@ -33,7 +33,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   late Difficulty _difficulty;
 
   /// Foto: a já salva, uma nova escolhida agora, ou removida.
-  String? _savedImage;
+  String? _photoId;
   XFile? _newImage;
   bool _saving = false;
   int? _focusIngredient;
@@ -51,7 +51,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     _notes = TextEditingController(text: r?.notes);
     _category = r?.category;
     _difficulty = r?.difficulty ?? Difficulty.facil;
-    _savedImage = r?.imagePath;
+    _photoId = r?.photoId;
     _ingredients = [
       for (final i in r?.ingredients ?? const <String>[])
         TextEditingController(text: i),
@@ -77,7 +77,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   Future<void> _pickImage() async {
     final pick = await pickPhoto(
       context,
-      hasPhoto: _newImage != null || _savedImage != null,
+      hasPhoto: _newImage != null || _photoId != null,
+      // Menor e mais comprimida: a foto vai para a nuvem.
+      maxWidth: 1080,
+      quality: 70,
     );
     if (pick == null || !mounted) return;
     setState(() {
@@ -86,7 +89,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
           _newImage = file;
         case PhotoRemoved():
           _newImage = null;
-          _savedImage = null;
+          _photoId = null;
       }
     });
   }
@@ -98,15 +101,21 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     final now = DateTime.now();
     final base = widget.recipe;
 
-    String? imagePath = _savedImage;
+    String? photoId = _photoId;
     if (_newImage != null) {
       try {
-        imagePath = await ImageStorage.save(_newImage!);
-      } catch (_) {
+        photoId = await store.savePhoto(await _newImage!.readAsBytes());
+      } catch (e) {
         if (!mounted) return;
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível salvar a foto.')),
+          SnackBar(
+            content: Text(
+              e is PhotoTooLargeException
+                  ? 'Foto muito grande. Escolha outra.'
+                  : 'Não foi possível salvar a foto.',
+            ),
+          ),
         );
         return;
       }
@@ -129,7 +138,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       prepMinutes: int.tryParse(_prep.text.trim()),
       servings: int.tryParse(_servings.text.trim()),
       notes: _notes.text.trim(),
-      imagePath: imagePath,
+      photoId: photoId,
       favorite: base?.favorite ?? false,
       createdAt: base?.createdAt ?? now,
       updatedAt: now,
@@ -353,12 +362,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   Widget _photoPicker(AppColors c, TextTheme t) {
     final Widget? image = _newImage != null
         ? Image.file(File(_newImage!.path), fit: BoxFit.cover)
-        : _savedImage != null
-        ? Image.file(
-            File(_savedImage!),
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => const SizedBox.shrink(),
-          )
+        : _photoId != null
+        ? CloudPhoto(photoId: _photoId!, placeholder: const SizedBox.shrink())
         : null;
 
     return AspectRatio(

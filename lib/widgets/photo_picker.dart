@@ -32,6 +32,7 @@ Future<PhotoPick?> pickPhoto(
   BuildContext context, {
   required bool hasPhoto,
   double maxWidth = 1600,
+  int quality = 85,
 }) async {
   final source = await showModalBottomSheet<Object>(
     context: context,
@@ -70,7 +71,7 @@ Future<PhotoPick?> pickPhoto(
     final file = await ImagePicker().pickImage(
       source: source as ImageSource,
       maxWidth: maxWidth,
-      imageQuality: 85,
+      imageQuality: quality,
     );
     return file == null ? null : PhotoPicked(file);
   } catch (_) {

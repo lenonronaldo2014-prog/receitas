@@ -1,17 +1,24 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'firebase_options.dart';
+import 'providers/auth_controller.dart';
 import 'providers/recipe_store.dart';
 import 'providers/theme_controller.dart';
 import 'providers/user_data.dart';
 import 'screens/splash_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeController()),
+        ChangeNotifierProvider<AuthController>(
+          create: (_) => FirebaseAuthController(),
+        ),
         ChangeNotifierProvider(create: (_) => RecipeStore()),
         ChangeNotifierProvider(create: (_) => UserData()),
       ],

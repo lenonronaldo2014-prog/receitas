@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/recipe.dart';
+import '../providers/recipe_store.dart';
 import '../theme/app_theme.dart';
 
 /// Foto da receita (BoxFit.cover). Sem foto, mostra o ícone da categoria.
@@ -25,7 +27,6 @@ class RecipeImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final path = recipe.imagePath;
 
     final placeholder = DecoratedBox(
       decoration: BoxDecoration(
@@ -44,20 +45,16 @@ class RecipeImage extends StatelessWidget {
       ),
     );
 
-    final image = (path == null || kIsWeb)
-        ? placeholder
-        : Image.file(
-            File(path),
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => placeholder,
-          );
-
+    final photoId = recipe.photoId;
     return ClipRRect(
       borderRadius: borderRadius ?? AppRadius.cardAll,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          image,
+          if (photoId == null || kIsWeb)
+            placeholder
+          else
+            CloudPhoto(photoId: photoId, placeholder: placeholder),
           if (gradient)
             DecoratedBox(
               decoration: BoxDecoration(
@@ -74,6 +71,56 @@ class RecipeImage extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Foto salva na conta: usa a cópia do aparelho ou baixa da nuvem.
+class CloudPhoto extends StatefulWidget {
+  const CloudPhoto({
+    super.key,
+    required this.photoId,
+    required this.placeholder,
+  });
+
+  final String photoId;
+  final Widget placeholder;
+
+  @override
+  State<CloudPhoto> createState() => _CloudPhotoState();
+}
+
+class _CloudPhotoState extends State<CloudPhoto> {
+  late Future<File?> _file;
+
+  @override
+  void initState() {
+    super.initState();
+    _file = context.read<RecipeStore>().photoFile(widget.photoId);
+  }
+
+  @override
+  void didUpdateWidget(CloudPhoto old) {
+    super.didUpdateWidget(old);
+    if (old.photoId != widget.photoId) {
+      _file = context.read<RecipeStore>().photoFile(widget.photoId);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<File?>(
+      future: _file,
+      builder: (_, snap) {
+        final f = snap.data;
+        if (f == null) return widget.placeholder;
+        return Image.file(
+          f,
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+          errorBuilder: (_, _, _) => widget.placeholder,
+        );
+      },
     );
   }
 }

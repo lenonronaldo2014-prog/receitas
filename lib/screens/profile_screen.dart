@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../navigation.dart';
+import '../providers/auth_controller.dart';
 import '../providers/recipe_store.dart';
 import '../providers/user_data.dart';
 import '../theme/app_theme.dart';
@@ -19,29 +18,17 @@ import 'settings_screen.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  Future<void> _editProfile(BuildContext context, UserData user) async {
+  Future<void> _editName(BuildContext context, UserData user) async {
     final name = TextEditingController(text: user.name);
-    final email = TextEditingController(text: user.email);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Editar perfil'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: name,
-              autofocus: true,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(hintText: 'Seu nome'),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            TextField(
-              controller: email,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(hintText: 'Seu e-mail'),
-            ),
-          ],
+        title: const Text('Seu nome'),
+        content: TextField(
+          controller: name,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(hintText: 'Seu nome'),
         ),
         actions: [
           TextButton(
@@ -55,9 +42,36 @@ class ProfileScreen extends StatelessWidget {
         ],
       ),
     );
-    if (ok == true) await user.setProfile(name.text, email.text);
+    if (ok == true && name.text.trim().isNotEmpty) {
+      await user.setName(name.text);
+    }
     name.dispose();
-    email.dispose();
+  }
+
+  Future<void> _signOut(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sair da conta?'),
+        content: const Text(
+          'Suas receitas continuam salvas na sua conta. '
+          'É só entrar de novo para vê-las.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sair'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && context.mounted) {
+      await context.read<AuthController>().signOut();
+    }
   }
 
   @override
@@ -97,7 +111,7 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   InkWell(
                     borderRadius: AppRadius.cardAll,
-                    onTap: () => _editProfile(context, user),
+                    onTap: () => _editName(context, user),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                         vertical: AppSpacing.xs,
@@ -153,6 +167,12 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   MenuTile(
+                    icon: Icons.logout_rounded,
+                    title: 'Sair da conta',
+                    onTap: () => _signOut(context),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  MenuTile(
                     icon: Icons.info_outline_rounded,
                     title: 'Sobre o app',
                     onTap: () async {
@@ -194,16 +214,25 @@ class _ProfileAvatar extends StatelessWidget {
   Future<void> _change(BuildContext context) async {
     final pick = await pickPhoto(
       context,
-      hasPhoto: user.photoPath != null,
-      maxWidth: 600,
+      hasPhoto: user.photo != null,
+      maxWidth: 400,
+      quality: 70,
     );
-    switch (pick) {
-      case PhotoPicked(:final file):
-        await user.setPhoto(file);
-      case PhotoRemoved():
-        await user.setPhoto(null);
-      case null:
-        break;
+    try {
+      switch (pick) {
+        case PhotoPicked(:final file):
+          await user.setPhoto(await file.readAsBytes());
+        case PhotoRemoved():
+          await user.setPhoto(null);
+        case null:
+          break;
+      }
+    } on FormatException {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto muito grande. Escolha outra.')),
+        );
+      }
     }
   }
 
@@ -211,12 +240,12 @@ class _ProfileAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final t = Theme.of(context).textTheme;
-    final path = user.photoPath;
+    final photo = user.photo;
 
     final avatar = CircleAvatar(
       radius: 32,
       backgroundColor: c.cardElevated,
-      foregroundImage: path == null ? null : FileImage(File(path)),
+      foregroundImage: photo == null ? null : MemoryImage(photo),
       child: initials.isEmpty
           ? Icon(Icons.person_rounded, size: 34, color: c.textSecondary)
           : Text(initials, style: t.titleLarge?.copyWith(color: c.accent)),

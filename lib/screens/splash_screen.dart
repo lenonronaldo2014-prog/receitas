@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/recipe_store.dart';
 import '../providers/theme_controller.dart';
 import '../providers/user_data.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_background.dart';
 import '../widgets/app_logo.dart';
-import 'main_shell.dart';
+import 'auth_gate.dart';
 
-/// Abertura do app: carrega os dados salvos e vai para a tela principal.
+/// Abertura do app: carrega as preferências e vai para o login ou o app.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -37,7 +36,6 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _start() async {
     await Future.wait([
       context.read<ThemeController>().load(),
-      context.read<RecipeStore>().load(),
       context.read<UserData>().load(),
       Future<void>.delayed(const Duration(milliseconds: 1200)),
     ]);
@@ -45,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (_, _, _) => const AppBackground(child: MainShell()),
+        pageBuilder: (_, _, _) => const AppBackground(child: AuthGate()),
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
       ),

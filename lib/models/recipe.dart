@@ -58,7 +58,8 @@ class Recipe {
     this.prepMinutes,
     this.servings,
     this.notes = '',
-    this.imagePath,
+    this.photoId,
+    this.legacyImagePath,
     this.favorite = false,
     required this.createdAt,
     required this.updatedAt,
@@ -73,7 +74,12 @@ class Recipe {
   final int? prepMinutes;
   final int? servings;
   final String notes;
-  final String? imagePath;
+
+  /// Foto salva na nuvem (users/{uid}/photos/{photoId}); null = sem foto.
+  final String? photoId;
+
+  /// Caminho da foto local das versões antigas (só para migrar).
+  final String? legacyImagePath;
   final bool favorite;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -84,7 +90,7 @@ class Recipe {
     difficulty.label,
   ].join(' • ');
 
-  Recipe copyWith({bool? favorite}) {
+  Recipe copyWith({bool? favorite, String? photoId}) {
     return Recipe(
       id: id,
       title: title,
@@ -95,7 +101,7 @@ class Recipe {
       prepMinutes: prepMinutes,
       servings: servings,
       notes: notes,
-      imagePath: imagePath,
+      photoId: photoId ?? this.photoId,
       favorite: favorite ?? this.favorite,
       createdAt: createdAt,
       updatedAt: updatedAt,
@@ -123,7 +129,7 @@ class Recipe {
     'prepMinutes': prepMinutes,
     'servings': servings,
     'notes': notes,
-    'imagePath': imagePath,
+    'photoId': photoId,
     'favorite': favorite,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
@@ -139,7 +145,8 @@ class Recipe {
     prepMinutes: json['prepMinutes'] as int?,
     servings: json['servings'] as int?,
     notes: json['notes'] as String? ?? '',
-    imagePath: json['imagePath'] as String?,
+    photoId: json['photoId'] as String?,
+    legacyImagePath: json['imagePath'] as String?,
     favorite: json['favorite'] as bool? ?? false,
     createdAt:
         DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),

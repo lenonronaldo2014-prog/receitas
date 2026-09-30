@@ -1,0 +1,25 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "receitas-anna",
+          "appId": "1:962392016831:android:2adeb8e4269d9d8482030a",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "receitas-anna",
+          "configurations": {
+            "android": "1:962392016831:android:2adeb8e4269d9d8482030a",
+            "ios": "1:962392016831:ios:195ee5f4cfb811ac82030a"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
