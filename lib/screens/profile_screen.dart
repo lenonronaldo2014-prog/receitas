@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,6 +9,7 @@ import '../providers/user_data.dart';
 import '../theme/app_theme.dart';
 import '../services/update_service.dart';
 import '../widgets/app_footer.dart';
+import '../widgets/photo_picker.dart';
 import '../widgets/menu_tile.dart';
 import '../widgets/tab_header.dart';
 import 'main_shell.dart';
@@ -101,22 +104,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          CircleAvatar(
-                            radius: 32,
-                            backgroundColor: c.cardElevated,
-                            child: initials.isEmpty
-                                ? Icon(
-                                    Icons.person_rounded,
-                                    size: 34,
-                                    color: c.textSecondary,
-                                  )
-                                : Text(
-                                    initials,
-                                    style: t.titleLarge?.copyWith(
-                                      color: c.accent,
-                                    ),
-                                  ),
-                          ),
+                          _ProfileAvatar(user: user, initials: initials),
                           const SizedBox(width: AppSpacing.md),
                           Expanded(
                             child: Column(
@@ -214,6 +202,77 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SliverFillRemaining(hasScrollBody: false, child: AppFooter()),
         ],
+      ),
+    );
+  }
+}
+
+/// Foto de perfil: toque para escolher/tirar/remover a foto.
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({required this.user, required this.initials});
+
+  final UserData user;
+  final String initials;
+
+  Future<void> _change(BuildContext context) async {
+    final pick = await pickPhoto(
+      context,
+      hasPhoto: user.photoPath != null,
+      maxWidth: 600,
+    );
+    switch (pick) {
+      case PhotoPicked(:final file):
+        await user.setPhoto(file);
+      case PhotoRemoved():
+        await user.setPhoto(null);
+      case null:
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final t = Theme.of(context).textTheme;
+    final path = user.photoPath;
+
+    final avatar = CircleAvatar(
+      radius: 32,
+      backgroundColor: c.cardElevated,
+      foregroundImage: path == null ? null : FileImage(File(path)),
+      child: initials.isEmpty
+          ? Icon(Icons.person_rounded, size: 34, color: c.textSecondary)
+          : Text(initials, style: t.titleLarge?.copyWith(color: c.accent)),
+    );
+    if (!photosSupported) return avatar;
+
+    return Tooltip(
+      message: 'Alterar foto',
+      child: GestureDetector(
+        onTap: () => _change(context),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            avatar,
+            Positioned(
+              right: -2,
+              bottom: -2,
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: c.accent,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: c.background, width: 2),
+                ),
+                child: Icon(
+                  Icons.photo_camera_rounded,
+                  size: 14,
+                  color: c.onAccent,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

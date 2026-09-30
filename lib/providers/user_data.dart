@@ -1,10 +1,14 @@
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../services/image_storage.dart';
 
 /// Dados do perfil, buscas recentes e lista de compras.
 class UserData extends ChangeNotifier {
   static const _nameKey = 'profile_name';
   static const _emailKey = 'profile_email';
+  static const _photoKey = 'profile_photo';
   static const _searchKey = 'recent_searches';
   static const _shoppingKey = 'shopping_list';
   static const _shoppingDoneKey = 'shopping_list_done';
@@ -12,12 +16,14 @@ class UserData extends ChangeNotifier {
 
   String _name = '';
   String _email = '';
+  String? _photoPath;
   List<String> _recentSearches = [];
   List<String> _shopping = [];
   Set<String> _shoppingDone = {};
 
   String get name => _name;
   String get email => _email;
+  String? get photoPath => _photoPath;
   String get firstName => _name.trim().split(' ').first;
   List<String> get recentSearches => List.unmodifiable(_recentSearches);
   List<String> get shopping => List.unmodifiable(_shopping);
@@ -27,6 +33,7 @@ class UserData extends ChangeNotifier {
     final p = await SharedPreferences.getInstance();
     _name = p.getString(_nameKey) ?? '';
     _email = p.getString(_emailKey) ?? '';
+    _photoPath = p.getString(_photoKey);
     _recentSearches = p.getStringList(_searchKey) ?? [];
     _shopping = p.getStringList(_shoppingKey) ?? [];
     _shoppingDone = (p.getStringList(_shoppingDoneKey) ?? []).toSet();
@@ -40,6 +47,22 @@ class UserData extends ChangeNotifier {
     final p = await SharedPreferences.getInstance();
     await p.setString(_nameKey, _name);
     await p.setString(_emailKey, _email);
+  }
+
+  /// Troca a foto de perfil ([file] null remove a foto).
+  Future<void> setPhoto(XFile? file) async {
+    final newPath = file == null
+        ? null
+        : await ImageStorage.save(file, folder: 'profile');
+    await ImageStorage.delete(_photoPath);
+    _photoPath = newPath;
+    notifyListeners();
+    final p = await SharedPreferences.getInstance();
+    if (newPath == null) {
+      await p.remove(_photoKey);
+    } else {
+      await p.setString(_photoKey, newPath);
+    }
   }
 
   Future<void> addSearch(String term) async {

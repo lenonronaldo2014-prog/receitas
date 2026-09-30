@@ -1,14 +1,15 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../models/recipe.dart';
 import '../providers/recipe_store.dart';
+import '../services/image_storage.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
+import '../widgets/photo_picker.dart';
 
 /// Tela usada tanto para criar quanto para editar uma receita.
 class RecipeFormScreen extends StatefulWidget {
@@ -38,11 +39,6 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   int? _focusIngredient;
 
   bool get _isEditing => widget.recipe != null;
-  static bool get _photosSupported => !kIsWeb;
-  static bool get _cameraSupported =>
-      !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.android ||
-          defaultTargetPlatform == TargetPlatform.iOS);
 
   @override
   void initState() {
@@ -79,62 +75,20 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   }
 
   Future<void> _pickImage() async {
-    final hasImage = _newImage != null || _savedImage != null;
-    final source = await showModalBottomSheet<Object>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_cameraSupported)
-              ListTile(
-                leading: const Icon(Icons.photo_camera_outlined),
-                title: const Text('Tirar foto'),
-                onTap: () => Navigator.pop(ctx, ImageSource.camera),
-              ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Escolher da galeria'),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-            if (hasImage)
-              ListTile(
-                leading: Icon(
-                  Icons.delete_outline,
-                  color: context.colors.error,
-                ),
-                title: Text(
-                  'Remover foto',
-                  style: TextStyle(color: context.colors.error),
-                ),
-                onTap: () => Navigator.pop(ctx, 'remove'),
-              ),
-            const SizedBox(height: AppSpacing.xs),
-          ],
-        ),
-      ),
+    final pick = await pickPhoto(
+      context,
+      hasPhoto: _newImage != null || _savedImage != null,
     );
-    if (source == null) return;
-    if (source == 'remove') {
-      setState(() {
-        _newImage = null;
-        _savedImage = null;
-      });
-      return;
-    }
-    try {
-      final file = await ImagePicker().pickImage(
-        source: source as ImageSource,
-        maxWidth: 1600,
-        imageQuality: 85,
-      );
-      if (file != null) setState(() => _newImage = file);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível abrir as fotos.')),
-      );
-    }
+    if (pick == null || !mounted) return;
+    setState(() {
+      switch (pick) {
+        case PhotoPicked(:final file):
+          _newImage = file;
+        case PhotoRemoved():
+          _newImage = null;
+          _savedImage = null;
+      }
+    });
   }
 
   Future<void> _save() async {
@@ -147,7 +101,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     String? imagePath = _savedImage;
     if (_newImage != null) {
       try {
-        imagePath = await RecipeStore.persistImage(_newImage!);
+        imagePath = await ImageStorage.save(_newImage!);
       } catch (_) {
         if (!mounted) return;
         setState(() => _saving = false);
@@ -222,7 +176,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               AppSpacing.xl,
             ),
             children: [
-              if (_photosSupported) ...[_photoPicker(c, t), gap],
+              if (photosSupported) ...[_photoPicker(c, t), gap],
               label('Nome da receita'),
               TextFormField(
                 controller: _title,

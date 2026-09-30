@@ -1,12 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/recipe.dart';
+import '../services/image_storage.dart';
 
 /// Guarda as receitas localmente no aparelho (shared_preferences, em JSON).
 /// As fotos ficam como arquivos na pasta de documentos do app.
@@ -76,7 +74,7 @@ class RecipeStore extends ChangeNotifier {
     final i = _recipes.indexWhere((r) => r.id == recipe.id);
     if (i >= 0) {
       final old = _recipes[i].imagePath;
-      if (old != null && old != recipe.imagePath) await _deleteFile(old);
+      if (old != recipe.imagePath) await ImageStorage.delete(old);
       _recipes[i] = recipe;
     } else {
       _recipes.add(recipe);
@@ -87,7 +85,7 @@ class RecipeStore extends ChangeNotifier {
 
   Future<void> delete(String id) async {
     final r = byId(id);
-    if (r?.imagePath != null) await _deleteFile(r!.imagePath!);
+    await ImageStorage.delete(r?.imagePath);
     _recipes.removeWhere((r) => r.id == id);
     notifyListeners();
     await _save();
@@ -99,27 +97,6 @@ class RecipeStore extends ChangeNotifier {
     _recipes[i] = _recipes[i].copyWith(favorite: !_recipes[i].favorite);
     notifyListeners();
     await _save();
-  }
-
-  /// Copia a foto escolhida para a pasta do app e devolve o novo caminho.
-  static Future<String> persistImage(XFile file) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final folder = Directory(
-      '${dir.path}${Platform.pathSeparator}recipe_images',
-    );
-    await folder.create(recursive: true);
-    final ext = file.path.contains('.') ? file.path.split('.').last : 'jpg';
-    final target = '${folder.path}${Platform.pathSeparator}${newId()}.$ext';
-    await file.saveTo(target);
-    return target;
-  }
-
-  static Future<void> _deleteFile(String path) async {
-    if (kIsWeb) return;
-    try {
-      final f = File(path);
-      if (await f.exists()) await f.delete();
-    } catch (_) {}
   }
 
   static String newId() =>
