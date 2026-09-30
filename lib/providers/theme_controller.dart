@@ -17,28 +17,29 @@ const accentOptions = <String, Color>{
 
 class ThemeController extends ChangeNotifier {
   static const _colorKey = 'theme_accent';
-  static const _modeKey = 'theme_mode';
+  static const _styleKey = 'theme_style';
+  static const _legacyModeKey = 'theme_mode';
 
   Color _accent = AppColors.defaultAccent;
-  ThemeMode _mode = ThemeMode.dark;
+  AppStyle _style = AppStyle.padrao;
 
   Color get accent => _accent;
-  ThemeMode get mode => _mode;
+  AppStyle get style => _style;
 
-  ThemeData get darkTheme =>
-      AppTheme.build(AppColors.dark.withAccent(_accent), Brightness.dark);
-  ThemeData get lightTheme =>
-      AppTheme.build(AppColors.light.withAccent(_accent), Brightness.light);
+  ThemeData get theme =>
+      AppTheme.build(_style.colors.withAccent(_accent), _style.brightness);
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     final color = prefs.getInt(_colorKey);
     if (color != null) _accent = Color(color);
-    final mode = prefs.getString(_modeKey);
-    _mode = ThemeMode.values.firstWhere(
-      (m) => m.name == mode,
-      orElse: () => ThemeMode.dark,
-    );
+    final style = prefs.getString(_styleKey);
+    if (style != null) {
+      _style = AppStyle.fromName(style);
+    } else if (prefs.getString(_legacyModeKey) == 'light') {
+      // Versões antigas tinham só Escuro/Claro.
+      _style = AppStyle.white;
+    }
     notifyListeners();
   }
 
@@ -49,10 +50,10 @@ class ThemeController extends ChangeNotifier {
     await prefs.setInt(_colorKey, color.toARGB32());
   }
 
-  Future<void> setMode(ThemeMode mode) async {
-    _mode = mode;
+  Future<void> setStyle(AppStyle style) async {
+    _style = style;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_modeKey, mode.name);
+    await prefs.setString(_styleKey, style.name);
   }
 }

@@ -24,28 +24,20 @@ class SettingsScreen extends StatelessWidget {
             AppSpacing.xl,
           ),
           children: [
-            const SectionTitle('Modo'),
-            SegmentedButton<ThemeMode>(
-              showSelectedIcon: false,
-              segments: const [
-                ButtonSegment(
-                  value: ThemeMode.dark,
-                  icon: Icon(Icons.dark_mode_outlined),
-                  label: Text('Escuro'),
-                ),
-                ButtonSegment(
-                  value: ThemeMode.light,
-                  icon: Icon(Icons.light_mode_outlined),
-                  label: Text('Claro'),
-                ),
-                ButtonSegment(
-                  value: ThemeMode.system,
-                  icon: Icon(Icons.settings_suggest_outlined),
-                  label: Text('Sistema'),
-                ),
+            const SectionTitle('Estilo'),
+            Row(
+              children: [
+                for (final (i, style) in AppStyle.values.indexed) ...[
+                  if (i > 0) const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: _StyleOption(
+                      style: style,
+                      selected: theme.style == style,
+                      onTap: () => theme.setStyle(style),
+                    ),
+                  ),
+                ],
               ],
-              selected: {theme.mode},
-              onSelectionChanged: (s) => theme.setMode(s.first),
             ),
             const SizedBox(height: AppSpacing.xxl),
             const SectionTitle('Cor de destaque'),
@@ -145,6 +137,103 @@ class _ColorOption extends StatelessWidget {
               name,
               style: Theme.of(context).textTheme.labelSmall,
               overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Miniatura de um estilo: o fundo real + o nome.
+class _StyleOption extends StatelessWidget {
+  const _StyleOption({
+    required this.style,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final AppStyle style;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final t = Theme.of(context).textTheme;
+    final preview = style.colors;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: 'Estilo ${style.label}',
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.field + 3),
+                border: Border.all(
+                  color: selected ? c.accent : c.border,
+                  width: selected ? 2.5 : 1,
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: AppRadius.fieldAll,
+                child: AspectRatio(
+                  aspectRatio: 9 / 20,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        preview.backgroundImage!,
+                        fit: BoxFit.cover,
+                        cacheWidth: 240,
+                      ),
+                      // Mini "card" para dar ideia do contraste.
+                      Center(
+                        child: FractionallySizedBox(
+                          widthFactor: 0.62,
+                          child: Container(
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: preview.card,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: preview.border),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (selected)
+                        Positioned(
+                          top: 6,
+                          right: 6,
+                          child: CircleAvatar(
+                            radius: 10,
+                            backgroundColor: c.accent,
+                            child: Icon(
+                              Icons.check_rounded,
+                              size: 14,
+                              color: c.onAccent,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              style.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: t.labelMedium?.copyWith(
+                color: selected ? c.textPrimary : c.textSecondary,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              ),
             ),
           ],
         ),

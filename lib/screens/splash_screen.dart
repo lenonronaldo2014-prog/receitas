@@ -26,8 +26,10 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Carrega a imagem de fundo antes de abrir as telas.
-    precacheImage(AppBackground.image, context);
+    // Carrega as imagens de fundo antes de abrir as telas.
+    for (final style in AppStyle.values) {
+      precacheImage(AssetImage(style.colors.backgroundImage!), context);
+    }
   }
 
   Future<void> _start() async {

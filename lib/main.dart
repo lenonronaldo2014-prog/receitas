@@ -31,9 +31,7 @@ class ReceitasApp extends StatelessWidget {
     return MaterialApp(
       title: 'Receitas da Anna',
       debugShowCheckedModeBanner: false,
-      theme: theme.lightTheme,
-      darkTheme: theme.darkTheme,
-      themeMode: theme.mode,
+      theme: theme.theme,
       home: home,
     );
   }

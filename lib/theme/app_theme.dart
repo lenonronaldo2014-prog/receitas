@@ -7,6 +7,7 @@ import 'app_typography.dart';
 
 export 'app_colors.dart';
 export 'app_spacing.dart';
+export 'app_style.dart';
 export 'app_typography.dart';
 
 /// ThemeData central do app — todas as telas herdam daqui.
