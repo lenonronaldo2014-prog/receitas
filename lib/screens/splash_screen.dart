@@ -6,6 +6,7 @@ import '../providers/theme_controller.dart';
 import '../providers/user_data.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_background.dart';
+import '../widgets/app_logo.dart';
 import 'main_shell.dart';
 
 /// Abertura do app: carrega os dados salvos e vai para a tela principal.
@@ -26,6 +27,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    precacheImage(AppLogo.image, context);
     // Carrega as imagens de fundo antes de abrir as telas.
     for (final style in AppStyle.values) {
       precacheImage(AssetImage(style.colors.backgroundImage!), context);
@@ -66,19 +68,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 curve: Curves.easeOutBack,
                 builder: (_, v, child) =>
                     Transform.scale(scale: v, child: child),
-                child: Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    gradient: c.accentGradient,
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  child: Icon(
-                    Icons.restaurant_menu_rounded,
-                    size: 50,
-                    color: c.onAccent,
-                  ),
-                ),
+                child: const AppLogo(size: 120),
               ),
               const SizedBox(height: AppSpacing.lg),
               Text('Receitas', style: t.headlineLarge?.copyWith(fontSize: 38)),

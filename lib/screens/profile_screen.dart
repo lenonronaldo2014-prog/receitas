@@ -9,6 +9,7 @@ import '../providers/user_data.dart';
 import '../theme/app_theme.dart';
 import '../services/update_service.dart';
 import '../widgets/app_footer.dart';
+import '../widgets/app_logo.dart';
 import '../widgets/photo_picker.dart';
 import '../widgets/menu_tile.dart';
 import '../widgets/tab_header.dart';
@@ -161,20 +162,7 @@ class ProfileScreen extends StatelessWidget {
                         context: context,
                         applicationName: 'Receitas da Anna',
                         applicationVersion: version,
-                        applicationIcon: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            gradient: c.accentGradient,
-                            borderRadius: BorderRadius.circular(
-                              AppRadius.button,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.restaurant_menu_rounded,
-                            color: c.onAccent,
-                          ),
-                        ),
+                        applicationIcon: const AppLogo(size: 48),
                         children: const [
                           Text(
                             'Guarde todas as suas receitas favoritas em um só lugar.',

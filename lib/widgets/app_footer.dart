@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../services/update_service.dart';
 import '../theme/app_theme.dart';
+import 'app_logo.dart';
 import 'buttons.dart';
 
 /// Rodapé do Perfil: nome do app, versão e botão de buscar atualização.
@@ -92,19 +93,7 @@ class _AppFooterState extends State<AppFooter> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: c.accentGradient,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
-            child: Icon(
-              Icons.restaurant_menu_rounded,
-              color: c.onAccent,
-              size: 30,
-            ),
-          ),
+          const AppLogo(size: 64),
           const SizedBox(height: AppSpacing.sm),
           Text.rich(
             TextSpan(
