@@ -7,7 +7,7 @@ import '../theme/app_theme.dart';
 class AppBackground extends StatelessWidget {
   const AppBackground({super.key, required this.child});
 
-  static const image = AssetImage('assets/images/background.jpg');
+  static const image = AssetImage('assets/images/background.png');
 
   final Widget child;
 
