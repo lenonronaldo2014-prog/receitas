@@ -1,4 +1,4 @@
-# Publica uma nova versão do app no GitHub (Releases), com o APK anexado.
+﻿# Publica uma nova versão do app no GitHub (Releases), com o APK anexado.
 # O botão "Buscar atualização" do app consulta essas Releases.
 #
 # Uso (na pasta do projeto):
@@ -7,7 +7,8 @@
 
 param([string]$Notes = "")
 
-$ErrorActionPreference = 'Stop'
+# Sem 'Stop': no PowerShell 5.1 ele trata qualquer saída de erro do gh/flutter como falha.
+# Os erros são verificados pelo $LASTEXITCODE.
 Set-Location (Split-Path $PSScriptRoot -Parent)
 
 $version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([0-9]+\.[0-9]+\.[0-9]+)').Matches[0].Groups[1].Value
