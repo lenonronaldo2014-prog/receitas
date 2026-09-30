@@ -44,21 +44,26 @@ class SecondaryButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.leading,
     this.expanded = true,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+
+  /// Imagem no lugar do ícone (ex.: logo do Google).
+  final Widget? leading;
   final bool expanded;
 
   @override
   Widget build(BuildContext context) {
-    final button = icon == null
+    final lead = leading ?? (icon == null ? null : Icon(icon, size: 20));
+    final button = lead == null
         ? OutlinedButton(onPressed: onPressed, child: Text(label))
         : OutlinedButton.icon(
             onPressed: onPressed,
-            icon: Icon(icon, size: 20),
+            icon: lead,
             label: Text(label),
           );
     return expanded ? SizedBox(width: double.infinity, child: button) : button;

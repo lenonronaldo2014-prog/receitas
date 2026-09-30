@@ -247,7 +247,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: AppSpacing.lg),
                     SecondaryButton(
                       label: 'Continuar com o Google',
-                      icon: Icons.g_mobiledata_rounded,
+                      leading: Image.asset(
+                        'assets/icon/google_g.png',
+                        width: 20,
+                        height: 20,
+                      ),
                       onPressed: _busy
                           ? null
                           : () => _run((auth) => auth.signInWithGoogle()),

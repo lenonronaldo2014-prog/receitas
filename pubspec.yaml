@@ -74,6 +74,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icon/icon.png
+    - assets/icon/google_g.png
 
   fonts:
     - family: Poppins
