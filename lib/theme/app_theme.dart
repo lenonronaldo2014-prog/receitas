@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/app_background.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
@@ -51,13 +52,13 @@ abstract final class AppTheme {
       colorScheme: scheme,
       fontFamily: AppTypography.fontFamily,
       textTheme: text,
-      scaffoldBackgroundColor: c.background,
+      scaffoldBackgroundColor: Colors.transparent,
       canvasColor: c.background,
       dividerColor: c.border,
       splashFactory: InkSparkle.splashFactory,
       extensions: [c],
       appBarTheme: AppBarTheme(
-        backgroundColor: c.background,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         foregroundColor: c.textPrimary,
         elevation: 0,
@@ -196,15 +197,46 @@ abstract final class AppTheme {
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: _FadeSlideTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.windows: _FadeSlideTransitionsBuilder(),
-          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.linux: _FadeSlideTransitionsBuilder(),
+          TargetPlatform.android: _WithBackground(
+            _FadeSlideTransitionsBuilder(),
+          ),
+          TargetPlatform.iOS: _WithBackground(
+            CupertinoPageTransitionsBuilder(),
+          ),
+          TargetPlatform.windows: _WithBackground(
+            _FadeSlideTransitionsBuilder(),
+          ),
+          TargetPlatform.macOS: _WithBackground(
+            CupertinoPageTransitionsBuilder(),
+          ),
+          TargetPlatform.linux: _WithBackground(_FadeSlideTransitionsBuilder()),
         },
       ),
     );
   }
+}
+
+/// Coloca o [AppBackground] atrás de cada tela, dentro da transição —
+/// assim cada rota é opaca e as telas não "vazam" uma sobre a outra.
+class _WithBackground extends PageTransitionsBuilder {
+  const _WithBackground(this.inner);
+
+  final PageTransitionsBuilder inner;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => inner.buildTransitions(
+    route,
+    context,
+    animation,
+    secondaryAnimation,
+    AppBackground(child: child),
+  );
 }
 
 /// Transição suave: fade + leve deslize para cima.

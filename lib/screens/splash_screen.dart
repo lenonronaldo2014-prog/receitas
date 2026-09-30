@@ -5,6 +5,7 @@ import '../providers/recipe_store.dart';
 import '../providers/theme_controller.dart';
 import '../providers/user_data.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_background.dart';
 import 'main_shell.dart';
 
 /// Abertura do app: carrega os dados salvos e vai para a tela principal.
@@ -22,6 +23,13 @@ class _SplashScreenState extends State<SplashScreen> {
     _start();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Carrega a imagem de fundo antes de abrir as telas.
+    precacheImage(AppBackground.image, context);
+  }
+
   Future<void> _start() async {
     await Future.wait([
       context.read<ThemeController>().load(),
@@ -33,7 +41,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (_, _, _) => const MainShell(),
+        pageBuilder: (_, _, _) => const AppBackground(child: MainShell()),
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
