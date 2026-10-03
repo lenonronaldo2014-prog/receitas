@@ -13,9 +13,13 @@ import '../widgets/recipe_image.dart';
 
 /// Tela usada tanto para criar quanto para editar uma receita.
 class RecipeFormScreen extends StatefulWidget {
-  const RecipeFormScreen({super.key, this.recipe});
+  const RecipeFormScreen({super.key, this.recipe, this.draft});
 
+  /// Receita existente (editar).
   final Recipe? recipe;
+
+  /// Rascunho para uma receita nova (ex.: lida de uma foto).
+  final Recipe? draft;
 
   @override
   State<RecipeFormScreen> createState() => _RecipeFormScreenState();
@@ -43,7 +47,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   @override
   void initState() {
     super.initState();
-    final r = widget.recipe;
+    final r = widget.recipe ?? widget.draft;
     _title = TextEditingController(text: r?.title);
     _prep = TextEditingController(text: r?.prepMinutes?.toString());
     _servings = TextEditingController(text: r?.servings?.toString());
@@ -185,6 +189,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               AppSpacing.xl,
             ),
             children: [
+              if (widget.draft != null) ...[_draftBanner(c, t), gap],
               if (photosSupported) ...[_photoPicker(c, t), gap],
               label('Nome da receita'),
               TextFormField(
@@ -355,6 +360,29 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
             onPressed: _save,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _draftBanner(AppColors c, TextTheme t) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: c.accent.withValues(alpha: 0.12),
+        borderRadius: AppRadius.fieldAll,
+        border: Border.all(color: c.accent.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.auto_awesome_rounded, color: c.accent),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              'Receita lida da foto. Confira os dados antes de salvar.',
+              style: t.bodySmall?.copyWith(color: c.textPrimary),
+            ),
+          ),
+        ],
       ),
     );
   }

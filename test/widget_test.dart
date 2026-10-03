@@ -10,6 +10,8 @@ import 'package:receitas/providers/auth_controller.dart';
 import 'package:receitas/providers/recipe_store.dart';
 import 'package:receitas/providers/theme_controller.dart';
 import 'package:receitas/providers/user_data.dart';
+import 'package:receitas/screens/recipe_form_screen.dart';
+import 'package:receitas/services/recipe_scanner.dart';
 import 'package:receitas/services/recipe_share.dart';
 import 'package:receitas/services/update_service.dart';
 import 'package:receitas/screens/auth_gate.dart';
@@ -326,5 +328,93 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('recipes'), isNull);
     expect(prefs.getString('recipes_backup_local'), isNotNull);
+  });
+
+  group('leitura de receita por foto', () {
+    test('separa nome, ingredientes, passos e demais campos', () {
+      final r = GeminiRecipeScanner.parse(
+        jsonEncode({
+          'encontrou': true,
+          'titulo': 'Bolo de Fubá',
+          'categoria': 'bolo',
+          'dificuldade': 'facil',
+          'tempoMinutos': 45,
+          'porcoes': 12,
+          'ingredientes': ['3 ovos', '2 xícaras de fubá', ' '],
+          'passos': ['Bata tudo no liquidificador', 'Asse por 40 minutos'],
+          'observacoes': 'Fica ótimo com café',
+        }),
+      );
+      expect(r.title, 'Bolo de Fubá');
+      expect(r.category, RecipeCategory.bolo);
+      expect(r.prepMinutes, 45);
+      expect(r.servings, 12);
+      expect(r.ingredients, ['3 ovos', '2 xícaras de fubá']);
+      expect(r.steps, hasLength(2));
+      expect(r.notes, 'Fica ótimo com café');
+      expect(r.photoId, isNull);
+    });
+
+    test('aceita campos faltando e valores estranhos', () {
+      final r = GeminiRecipeScanner.parse(
+        jsonEncode({
+          'titulo': '',
+          'categoria': 'inexistente',
+          'tempoMinutos': 0,
+          'ingredientes': ['farinha'],
+        }),
+      );
+      expect(r.title, 'Receita sem nome');
+      expect(r.category, RecipeCategory.outro);
+      expect(r.prepMinutes, isNull);
+      expect(r.steps, isEmpty);
+    });
+
+    test('avisa quando a foto não é uma receita', () {
+      expect(
+        () => GeminiRecipeScanner.parse(jsonEncode({'encontrou': false})),
+        throwsA(isA<ScanException>()),
+      );
+      expect(
+        () => GeminiRecipeScanner.parse('isto não é json'),
+        throwsA(isA<ScanException>()),
+      );
+    });
+  });
+
+  testWidgets('receita lida da foto abre preenchida e salva', (tester) async {
+    await pumpApp(tester);
+    final draft = GeminiRecipeScanner.parse(
+      jsonEncode({
+        'titulo': 'Coxinha de Frango',
+        'categoria': 'salgado',
+        'dificuldade': 'medio',
+        'ingredientes': ['500g de frango', '2 xícaras de farinha'],
+        'passos': ['Cozinhe o frango', 'Modele as coxinhas'],
+      }),
+    );
+    final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+    nav.push(MaterialPageRoute(builder: (_) => RecipeFormScreen(draft: draft)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Nova Receita'), findsOneWidget);
+    expect(find.textContaining('Receita lida da foto'), findsOneWidget);
+    expect(find.text('Coxinha de Frango'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('500g de frango'),
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byType(RecipeFormScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(find.text('500g de frango'), findsOneWidget);
+
+    await tester.tap(find.text('Salvar Receita'));
+    await tester.pumpAndSettle();
+    expect(find.text('Coxinha de Frango'), findsWidgets);
+    expect(find.text('Destaque'), findsOneWidget);
   });
 }

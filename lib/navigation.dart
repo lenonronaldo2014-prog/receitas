@@ -5,6 +5,7 @@ import 'screens/import_recipe_screen.dart';
 import 'screens/recipe_detail_screen.dart';
 import 'screens/recipe_form_screen.dart';
 import 'screens/recipe_list_screen.dart';
+import 'screens/scan_recipe_screen.dart';
 
 /// Atalhos de navegação usados por várias telas.
 abstract final class AppNav {
@@ -42,6 +43,12 @@ abstract final class AppNav {
                   onTap: () => Navigator.pop(ctx, 0),
                 ),
                 ListTile(
+                  leading: const Icon(Icons.document_scanner_outlined),
+                  title: const Text('Escanear receita'),
+                  subtitle: const Text('Ler uma receita de uma foto'),
+                  onTap: () => Navigator.pop(ctx, 2),
+                ),
+                ListTile(
                   leading: const Icon(Icons.qr_code_2_rounded),
                   title: const Text('Adicionar por código'),
                   subtitle: const Text(
@@ -61,6 +68,8 @@ abstract final class AppNav {
         await newRecipe(context);
       case 1:
         await importRecipe(context);
+      case 2:
+        await push(context, const ScanRecipeScreen());
     }
   }
 
