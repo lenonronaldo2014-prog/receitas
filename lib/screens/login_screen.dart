@@ -5,6 +5,7 @@ import '../providers/auth_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/buttons.dart';
+import '../widgets/text_input_dialog.dart';
 
 /// Entrar / criar conta (e-mail e senha ou Google).
 class LoginScreen extends StatefulWidget {
@@ -58,38 +59,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _forgotPassword() async {
-    final controller = TextEditingController(text: _email.text);
-    final email = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Recuperar senha'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Vamos enviar um link para você criar uma senha nova.'),
-            const SizedBox(height: AppSpacing.md),
-            TextField(
-              controller: controller,
-              autofocus: true,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(hintText: 'Seu e-mail'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Enviar'),
-          ),
-        ],
-      ),
+    final email = await showTextInputDialog(
+      context,
+      title: 'Recuperar senha',
+      message: 'Vamos enviar um link para você criar uma senha nova.',
+      initialValue: _email.text,
+      hint: 'Seu e-mail',
+      confirmLabel: 'Enviar',
+      keyboardType: TextInputType.emailAddress,
     );
-    controller.dispose();
     if (email == null || email.trim().isEmpty) return;
     await _run((auth) async {
       await auth.resetPassword(email);

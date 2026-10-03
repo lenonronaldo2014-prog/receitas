@@ -12,6 +12,7 @@ import '../widgets/app_logo.dart';
 import '../widgets/photo_picker.dart';
 import '../widgets/menu_tile.dart';
 import '../widgets/tab_header.dart';
+import '../widgets/text_input_dialog.dart';
 import 'main_shell.dart';
 import 'settings_screen.dart';
 
@@ -19,33 +20,14 @@ class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   Future<void> _editName(BuildContext context, UserData user) async {
-    final name = TextEditingController(text: user.name);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Seu nome'),
-        content: TextField(
-          controller: name,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(hintText: 'Seu nome'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Salvar'),
-          ),
-        ],
-      ),
+    final name = await showTextInputDialog(
+      context,
+      title: 'Seu nome',
+      initialValue: user.name,
+      hint: 'Seu nome',
+      capitalization: TextCapitalization.words,
     );
-    if (ok == true && name.text.trim().isNotEmpty) {
-      await user.setName(name.text);
-    }
-    name.dispose();
+    if (name != null && name.trim().isNotEmpty) await user.setName(name);
   }
 
   Future<void> _signOut(BuildContext context) async {
