@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
 import '../widgets/photo_picker.dart';
 import '../widgets/recipe_image.dart';
+import 'scan_recipe_screen.dart';
 
 /// Tela usada tanto para criar quanto para editar uma receita.
 class RecipeFormScreen extends StatefulWidget {
@@ -190,6 +191,16 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
             ),
             children: [
               if (widget.draft != null) ...[_draftBanner(c, t), gap],
+              if (!_isEditing && widget.draft == null) ...[
+                SecondaryButton(
+                  label: 'Ler receita de uma foto',
+                  icon: Icons.document_scanner_outlined,
+                  onPressed: () => Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const ScanRecipeScreen()),
+                  ),
+                ),
+                gap,
+              ],
               if (photosSupported) ...[_photoPicker(c, t), gap],
               label('Nome da receita'),
               TextFormField(
